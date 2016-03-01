@@ -31,3 +31,10 @@
 # Debug files
 *.dSYM/
 Practical training.rar
+
+*.a43
+*.lst
+*.map
+*.trc
+*.log
+*.vcd-NPBASIC
