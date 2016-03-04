@@ -12,8 +12,8 @@
  * If an UART has been added:    #define UART
  */
 
-#define NONPREBASIC 
-//#define NONPRE
+//#define NONPREBASIC 
+#define NONPRE
 //#define THREADS
 //#define SEMA
 
