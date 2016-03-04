@@ -11,8 +11,8 @@ NAME            = SchedTest
 #OBJECTS         = SchedTest.o Led.o Clock.o Scheduler.MultiTask.o 
 #OBJECTS         = SchedTest.o Led.o Clock.o SchedulerPre.o 
 #OBJECTS         = SchedTest.o Led.o Clock.o SchedulerPre.o Uart.o 
-OBJECTS         = SchedTest.o Led.o Clock.o SchedulerNPBasic.o 
-#OBJECTS         = SchedTest.o Led.o Clock.o SchedulerNP.o 
+#OBJECTS         = SchedTest.o Led.o Clock.o SchedulerNPBasic.o 
+OBJECTS         = SchedTest.o Led.o Clock.o SchedulerNP.o 
 CPU             = msp430x1611
 
 CFLAGS          = -mmcu=${CPU} -Os -Wall -Winline -g -DNODE_ADDR=${MOTEID} 
