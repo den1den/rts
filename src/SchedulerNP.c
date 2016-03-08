@@ -118,8 +118,9 @@ uint8_t UnRegisterTask (uint8_t t)
 void HandleTasks (void)
 { 
   while (Pending) {
-    int8_t i=NUMTASKS-1; Pending = 0;
-    while (i>=0) {
+    int8_t i=highest;
+    Pending = 0;
+    while (i>=lowest) {
       Taskp t = &Tasks[i];
       if (t->Activated != t->Invoked) {
         if (t->Flags & TRIGGERED) {
@@ -128,7 +129,11 @@ void HandleTasks (void)
         else t->Invoked = t->Activated;
       }
       else i--;
-} } }
+    }
+  }
+  lowest = NUMTASKS-1;
+  highest = 0;
+}
 
 interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
 {
@@ -139,7 +144,9 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
       if (t->Remaining-- == 0) {
         t->Remaining = t->Period-1; 
         t->Activated++;
-  	Pending = 1;
+      	Pending = 1;
+      	if(i < lowest) lowest = i;
+      	if(i > highest) highest = i;
       }
   } while (i--);
   if (Pending) ExitLowPowerMode3();
