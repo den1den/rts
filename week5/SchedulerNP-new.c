@@ -48,7 +48,7 @@
 #include "Scheduler.h"
 
 Task Tasks[NUMTASKS];           /* Lower indices: lower priorities           */
-int8_t HPrioPendingTask = -1;            /* Indicates if there is a pending task      */ 
+uint8_t Pending = 0;            /* Indicates if there is a pending task      */ 
 
 uint16_t IntDisable (void)
 {
@@ -120,9 +120,9 @@ uint8_t UnRegisterTask (uint8_t t)
   
 void HandleTasks (void)
 { 
-  while (HPrioPendingTask >= 0) {
-    int8_t i=HPrioPendingTask; HPrioPendingTask = -1;
-    while (i>=0 && HPrioPendingTask <= i) {
+  while (Pending) {
+    int8_t i=NUMTASKS-1; Pending = 0;
+    while (i>=0 && !Pending) {
       Taskp t = &Tasks[i];
       if (t->Activated != t->Invoked) {
         if (t->Flags & TRIGGERED) {
@@ -138,14 +138,14 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
   uint8_t i = NUMTASKS-1; 
   do {
     Taskp t = &Tasks[i];
-    if (t->Flags & TRIGGERED)
+    if (t->Flags & TRIGGERED) // countdown
       if (t->Remaining-- == 0) {
         t->Remaining = t->Period-1; 
         t->Activated++;
-        if(i > HPrioPendingTask) HPrioPendingTask = i;
+  	Pending = 1;
       }
   } while (i--);
-  if (HPrioPendingTask >= 0) ExitLowPowerMode3();
+  if (Pending) ExitLowPowerMode3();
 }
 
 #endif
