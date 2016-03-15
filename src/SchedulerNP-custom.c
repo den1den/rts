@@ -47,10 +47,8 @@
 #include "Clock.h"
 #include "Scheduler.h"
 
-Task Tasks[NUMTASKS];           /* Lower indices: lower priorities         */
-//uint8_t Pending = 0;          /* Indicates if there is a pending task    */>>
-uint8_t HPrioPendingTask = -1;  /* Indicates the priority of the higest pending
-                                   task, or -1 if there is none          *///>>
+Task Tasks[NUMTASKS];           /* Lower indices: lower priorities           */
+int8_t HPrioPendingTask = -1;            /* Indicates if there is a pending task      */ 
 
 uint16_t IntDisable (void)
 {
@@ -121,11 +119,11 @@ uint8_t UnRegisterTask (uint8_t t)
  */
   
 void HandleTasks (void)
-{
-  while (HPrioPendingTask>=0) {
-    int8_t i=HPrioPendingTask;                          //<<
-    HPrioPendingTask = -1;                              //<<
-    while (i>=0 && HPrioPendingTask<=i) {
+{ 
+  while (HPrioPendingTask >= 0) {
+    int8_t i=HPrioPendingTask;
+    HPrioPendingTask = -1;
+    while (i>=0 && HPrioPendingTask <= i) {
       Taskp t = &Tasks[i];
       if (t->Activated != t->Invoked) {
         if (t->Flags & TRIGGERED) {
@@ -145,10 +143,12 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
       if (t->Remaining-- == 0) {
         t->Remaining = t->Period-1; 
         t->Activated++;
-        if(i>HPrioPendingTask) HPrioPendingTask = i;    //<<
+        if(i > HPrioPendingTask){
+            HPrioPendingTask = i;
+        }
       }
   } while (i--);
-  if (HPrioPendingTask >= 0) ExitLowPowerMode3();       //<<
+  if (HPrioPendingTask >= 0) ExitLowPowerMode3();
 }
 
 #endif
