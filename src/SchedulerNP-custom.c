@@ -47,8 +47,10 @@
 #include "Clock.h"
 #include "Scheduler.h"
 
-Task Tasks[NUMTASKS];           /* Lower indices: lower priorities           */
-uint8_t Pending = 0;            /* Indicates if there is a pending task      */ 
+Task Tasks[NUMTASKS];           /* Lower indices: lower priorities         */
+//uint8_t Pending = 0;          /* Indicates if there is a pending task    */>>
+uint8_t HPrioPendingTask = -1;  /* Indicates the priority of the higest pending
+                                   task, or -1 if there is none          *///>>
 
 uint16_t IntDisable (void)
 {
@@ -119,47 +121,34 @@ uint8_t UnRegisterTask (uint8_t t)
  */
   
 void HandleTasks (void)
-{ 
-  //while (Pending) {
-    uint8_t i = HPrioPendingTask;
-    Pending = 0;
-    while (i>=0) {
-      // If higher task -> i = HPrioPendingTask
-      
+{
+  while (HPrioPendingTask>=0) {
+    int8_t i=HPrioPendingTask;                          //<<
+    HPrioPendingTask = -1;                              //<<
+    while (i>=0 && HPrioPendingTask<=i) {
       Taskp t = &Tasks[i];
       if (t->Activated != t->Invoked) {
         if (t->Flags & TRIGGERED) {
-          t->Taskf(); t->Invoked++;
+          t->Taskf(); t->Invoked++; 
         }
         else t->Invoked = t->Activated;
       }
-      else 
-      {
-          if (i >= HPrioPendingTask){
-            HPrioPendingTask--;
-          }
-          i--;
-      }
-       
-      if i < HPrioPendingTask{
-          i = HPrioPendingTask
-      } 
-} } //}
+      else i--;
+} } }
 
 interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
 {
-    //TRAVERSE IN OTHER DIRECTION TO KEEP TRACK OF HIGHEST ON ACTIVATION
   uint8_t i = NUMTASKS-1; 
   do {
     Taskp t = &Tasks[i];
-    if (t->Flags & TRIGGERED) // countdown
+    if (t->Flags & TRIGGERED)
       if (t->Remaining-- == 0) {
         t->Remaining = t->Period-1; 
         t->Activated++;
-        HPrioPendingTask = i;
+        if(i>HPrioPendingTask) HPrioPendingTask = i;    //<<
       }
   } while (i--);
-  if (HPrioPendingTask != -1) ExitLowPowerMode3();
+  if (HPrioPendingTask >= 0) ExitLowPowerMode3();       //<<
 }
 
 #endif

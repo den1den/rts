@@ -138,11 +138,11 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
   uint8_t i = NUMTASKS-1; 
   do {
     Taskp t = &Tasks[i];
-    if (t->Flags & TRIGGERED) // countdown
+    if (t->Flags & TRIGGERED)
       if (t->Remaining-- == 0) {
         t->Remaining = t->Period-1; 
         t->Activated++;
-  	Pending = 1;
+      	Pending = 1;
       }
   } while (i--);
   if (Pending) ExitLowPowerMode3();
