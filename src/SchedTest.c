@@ -58,9 +58,7 @@ void BlinkGreen (void)
   if (++i % 4 == 0) {
     CountDelay (60000); 
 
-    /* An event-triggered extension
     Activate (REDBLINKPRIO, TicksPS/2);
-    */
   }    
   ToggleLeds (GREEN);
 }
