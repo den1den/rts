@@ -13,7 +13,7 @@
  */
 
 //#define NONPREBASIC 
-//#define NONPRE
+#define NONPRE
 //#define THREADS
 //#define SEMA
 
