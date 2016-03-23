@@ -144,32 +144,27 @@ uint8_t UnRegisterTask (uint8_t t)
   return (E_SUCCESS);
 }  
 
-
 uint8_t Activate(uint8_t Prio, uint16_t Ticks)
 {
-    if (Prio < 0 || Prio > NUMTASKS-1) return E_BOUNDS;
+    if ( Prio < 0 || Prio > NUMTASKS-1 ) return E_WRONGPAR;
     Taskp t = &Tasks[Prio];
-    if (t->Flags & TT) return E_WRONGPAR;
-    if (!t->Flags) return E_NOTASK;
-    if (Ticks == 0) {
-        if (t->Flags & DIRECT) {
-            uint8_t iWasEnabled = IntDisable() & INTRPT_BIT;
+    if ( t->Flags & TT ) return E_WRONGPAR;
+    if ( !(t->Flags) ) return E_NOTASK;
+    uint8_t sw = IntDisable();
+    if ( Ticks == 0 ) {
+        if ( t->Flags & DIRECT ) {
             t->Taskf();
-            if (iWasEnabled) _EINT();
         } else {
-            if (Prio > BusyPrio) {
-                uint8_t oldPrio = BusyPrio;
-                BusyPrio = Prio;
-                t->Taskf();
-                BusyPrio = oldPrio;
-            } else {
-                t->Activated++;
+            t->Activated++;
+            if ( Prio > BusyPrio ) {
+                Pending = 1;
             }
         }
     } else { // Ticks > 0
         t->Remaining = Ticks;
         t->Flags |= TT;
     }
+    RestoreSW(sw);
 }
 
 void HandleTasks (void)
@@ -197,7 +192,7 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
   do {
     Taskp t = &Tasks[i];
     if (t->Flags & TT) { // countdown
-      if (t->Remaining-- == 0) {
+      if (t->Remaining-- <= 0) {
         t->Activated++;
         if (t->Flags & PERIODIC) {
           t->Remaining = t->Period-1;
