@@ -12,7 +12,7 @@
  * The scheduler is implemented by an array of tasks called Tasks, 
  * and a couple of functions. 
  *
- * Tasks must be declared as TRIGGERED, and possibly PERIODIC.
+ * Tasks must be declared as TRIGGERED, and pssibly PERIODIC.
  * Tasks are triggered (activated) by the timer (periodically or single shot) or 
  * by other tasks. The latter case is called event triggering. 
  *
@@ -74,7 +74,7 @@ uint16_t IntDisable (void)
 
 void RestoreSW (uint16_t sw)
 {
-  if (Pending && (sw & INTRPT_BIT)) HandleTasks (); // if Pending and Interrupt enabled
+  if (Pending && (sw & INTRPT_BIT)) HandleTasks ();
     // r2 = sw
   asm volatile ("mov.w %0, r2\n\t" :: "r"(sw));
 }  
@@ -144,28 +144,10 @@ uint8_t UnRegisterTask (uint8_t t)
   return (E_SUCCESS);
 }  
 
-uint8_t Activate(uint8_t Prio, uint16_t Ticks)
-{
-    if ( Prio < 0 || Prio > NUMTASKS-1 ) return E_WRONGPAR;
-    Taskp t = &Tasks[Prio];
-    if ( t->Flags & TT ) return E_WRONGPAR;
-    if ( !(t->Flags) ) return E_NOTASK;
-    uint8_t sw = IntDisable();
-    if ( Ticks == 0 ) {
-        if ( t->Flags & DIRECT ) {
-            t->Taskf();
-        } else {
-            t->Activated++;
-            if ( Prio > BusyPrio ) {
-                Pending = 1;
-            }
-        }
-    } else { // Ticks > 0
-        t->Remaining = Ticks;
-        t->Flags |= TT;
-    }
-    RestoreSW(sw);
-}
+/*
+ * Missing (to be added): 
+ *   Activate (t, d): activate task t after d time units
+ */
 
 void HandleTasks (void)
 { 
@@ -191,22 +173,14 @@ interrupt (TIMERA0_VECTOR) TimerIntrpt (void)
   uint8_t i = NUMTASKS-1; 
   do {
     Taskp t = &Tasks[i];
-    if (t->Flags & TT) { // countdown
-      if (t->Remaining-- <= 0) {
+    if (t->Flags & TT) // countdown
+      if (t->Remaining-- == 0) {
         t->Activated++;
-        if (t->Flags & PERIODIC) {
-          t->Remaining = t->Period-1;
-        } else {
-          t->Flags &= ~TT;
-        }
-        if (t->Flags & DIRECT) {
-          t->Invoked++;
-          t->Taskf();
-        } else {
-          Pending |= i>BusyPrio;
-        }
+        if (t->Flags & PERIODIC) t->Remaining = t->Period-1; 
+        else t->Flags &= ~TT;
+        if (t->Flags & DIRECT) { t->Invoked++; t->Taskf(); }
+  	else Pending |= i>BusyPrio;
       }
-    }
   } while (i--);
   if (Pending) HandleTasks (); /* stay in interrupt context *
                                 * interrupts disabled       */
